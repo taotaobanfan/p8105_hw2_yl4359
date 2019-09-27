@@ -1,0 +1,147 @@
+---
+title: "p8105_hw2_yl4359"
+author: "Yue Lai"
+date: "9/27/2019"
+output: github_document
+---
+```{r setup, include = FALSE}
+library(readxl)
+library(tidyverse)
+library(ggridges)
+```
+
+# Problem 1
+
+**Read and clean the Mr. Trash Wheel sheet**
+
+```{r}
+wheel_data = read_excel(
+  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", 
+  sheet = "Mr. Trash Wheel",
+  range = "A2:N338"
+  ) %>% 
+  janitor::clean_names() %>% 
+  drop_na("dumpster") %>% 
+  mutate(sports_balls = as.integer(round(sports_balls)))
+```
+
+**Read and clean precipitation data for 2017 and 2018**
+
+```{r}
+precipitation_2017_data = read_excel(
+  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  sheet = "2017 Precipitation",
+  skip = 1
+  ) %>% 
+  janitor::clean_names() %>% 
+  drop_na(c("total","month")) %>% 
+  mutate(year = 2017)
+
+precipitation_2018_data = read_excel(
+  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  sheet = "2018 Precipitation",
+  skip = 1
+  ) %>% 
+  janitor::clean_names() %>% 
+  drop_na(c("total", "month")) %>% 
+  mutate(year = 2018)
+
+precipitation_data = rbind(
+  precipitation_2017_data, precipitation_2018_data) %>% 
+  mutate(month = month.name[month]) %>% 
+  select(year, month, total)
+```
+
+There is `r nrow(wheel_data)` observations in wheel_data, 
+`r nrow(precipitation_data)` observations in precipitation_data.
+The total precipitation in 2018 is `r sum(pull(precipitation_2018_data, total))`. 
+The median number of sports balls in a dumpster in 2017 is `r median(pull(filter(wheel_data, year == "2017"), sports_balls))`.
+
+# Problem 2
+
+**Clean the data in pols-month.csv**
+
+```{r}
+pols_month_data = read_csv(file = "./data/fivethirtyeight_datasets/pols-month.csv", 
+                           col_types = "Ddddddddd") %>% 
+  separate(col = "mon", into = c("year", "month", "day")) %>%
+  mutate(month = month.name[as.numeric(month)],
+         president = recode(prez_dem, "0" = "gop", "1" = "dem")) %>% 
+  select(-c(day, prez_dem, prez_gop))
+```
+
+**Clean the data in snp.csv**
+
+```{r}
+snp_data = read_csv(file = "./data/fivethirtyeight_datasets/snp.csv", 
+                    col_types = "cd") %>% 
+  separate(col = "date", into = c("month", "day", "year")) %>% 
+  select(year, month, day, close) %>% 
+  mutate(month = month.name[as.numeric(month)]) %>% 
+  arrange(year, month)
+```
+
+**Clean the data in unemployment.csv**
+
+```{r}
+unemployment_data = read_csv(file = "./data/fivethirtyeight_datasets/unemployment.csv",
+                             col_types = "cdddddddddddd") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(jan:dec, names_to = "month", values_to = "percentage") %>% 
+  mutate(month = recode(month, "jan" = "January", "feb" = "February", "mar" = "March", "apr" = "April", "jun" = "June", "jul" = "July", "aug" = "August", "sep" = "September", "oct" = "October", "nov" = "November", "dec" = "December"))
+```
+
+**Join the datasets by merging snp into pols, and merging unemployment into the result**
+
+```{r}
+pols_snp_data = left_join(pols_month_data, snp_data, by = c("year", "month"))
+pols_snp_unemploy_data = left_join(pols_snp_data, unemployment_data, by = c("year", "month"))
+```
+
+The dataset _pols_month_data_ contains `r nrow(pols_month_data)` rows and `r ncol(pols_month_data)` columns.
+The dataset _snp_data_ contains `r nrow(snp_data)` rows and `r ncol(snp_data)` columns.
+The dataset _unemployment_data_ contains `r nrow(unemployment_data)` and `r ncol(unemployment_data)` columns.
+The resulting dataset _pols_snp_unemploy_data_ contains `r nrow(pols_snp_unemploy_data)` rows and `r ncol(pols_snp_unemploy_data)` columns. 
+The year in resulting dataset is from `r min(pull(pols_snp_unemploy_data, year))` to `r max(pull(pols_snp_unemploy_data))`.
+The key variables in the resulting dataset includes year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, day, close and precentage.
+
+# Problem 3
+
+**Tidy the data of popularity of baby names**
+
+```{r}
+names_data = read_csv(file = "./data/Popular_Baby_Names.csv",
+                      col_types = "dcccdd") %>% 
+  janitor::clean_names() %>% 
+  mutate(gender = str_to_lower(gender), ethnicity = str_to_lower(ethnicity), childs_first_name = str_to_lower(childs_first_name)) %>% 
+  distinct()
+```
+
+**Produce a well_structured, reader_friendly table showing the rank in popularity of the name "Olivia" as a female baby name over time**
+
+```{r}
+olivia_data = 
+  filter(names_data, childs_first_name == "olivia" & gender == "female") %>% 
+  select(year_of_birth, ethnicity, rank) %>% 
+  pivot_wider(names_from = "ethnicity", values_from = "rank") %>% 
+  janitor::clean_names()
+```
+
+**Produce a similar table showing the most popular name among male children over time**
+
+```{r}
+male_rank1_data = 
+  filter(names_data, rank == "1" & gender == "male") %>% 
+  select(year_of_birth, ethnicity, childs_first_name) %>% 
+  pivot_wider(names_from = "ethnicity", values_from = "childs_first_name") %>% 
+  janitor::clean_names()
+```
+
+**For male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis)**
+
+```{r scatter_plot}
+filter(names_data, year_of_birth == "2016" & gender == "male" & ethnicity == "white non hispanic") %>% 
+  ggplot(aes(x = rank, y = count)) +
+  geom_point()
+```
+
