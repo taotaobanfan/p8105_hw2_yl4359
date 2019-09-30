@@ -1,7 +1,7 @@
 ---
 title: "p8105_hw2_yl4359"
 author: "Yue Lai"
-date: "9/27/2019"
+date: "9/30/2019"
 output: github_document
 ---
 ```{r setup, include = FALSE}
@@ -52,8 +52,9 @@ precipitation_data = rbind(
   select(year, month, total)
 ```
 
-There is `r nrow(wheel_data)` observations in wheel_data, 
-`r nrow(precipitation_data)` observations in precipitation_data.
+There are `r nrow(wheel_data)` observations in _wheel_data_, 
+`r nrow(precipitation_data)` observations in _precipitation_data_.
+The key variables in _wheel_data_ are `dumpster`, `month`, `year` and `weight_tons`.
 The total precipitation in 2018 is `r sum(pull(precipitation_2018_data, total))`. 
 The median number of sports balls in a dumpster in 2017 is `r median(pull(filter(wheel_data, year == "2017"), sports_balls))`.
 
@@ -66,7 +67,8 @@ pols_month_data = read_csv(file = "./data/fivethirtyeight_datasets/pols-month.cs
                            col_types = "Ddddddddd") %>% 
   separate(col = "mon", into = c("year", "month", "day")) %>%
   mutate(month = month.name[as.numeric(month)],
-         president = recode(prez_dem, "0" = "gop", "1" = "dem")) %>% 
+         president = recode(prez_dem, "0" = "gop", "1" = "dem", "2" = "dem")
+         ) %>% 
   select(-c(day, prez_dem, prez_gop))
 ```
 
@@ -76,7 +78,7 @@ pols_month_data = read_csv(file = "./data/fivethirtyeight_datasets/pols-month.cs
 snp_data = read_csv(file = "./data/fivethirtyeight_datasets/snp.csv", 
                     col_types = "cd") %>% 
   separate(col = "date", into = c("month", "day", "year")) %>% 
-  select(year, month, day, close) %>% 
+  select(year, month, close) %>% 
   mutate(month = month.name[as.numeric(month)]) %>% 
   arrange(year, month)
 ```
@@ -102,8 +104,8 @@ The dataset _pols_month_data_ contains `r nrow(pols_month_data)` rows and `r nco
 The dataset _snp_data_ contains `r nrow(snp_data)` rows and `r ncol(snp_data)` columns.
 The dataset _unemployment_data_ contains `r nrow(unemployment_data)` and `r ncol(unemployment_data)` columns.
 The resulting dataset _pols_snp_unemploy_data_ contains `r nrow(pols_snp_unemploy_data)` rows and `r ncol(pols_snp_unemploy_data)` columns. 
-The year in resulting dataset is from `r min(pull(pols_snp_unemploy_data, year))` to `r max(pull(pols_snp_unemploy_data))`.
-The key variables in the resulting dataset includes year, month, gov_gop, sen_gop, rep_gop, gov_dem, sen_dem, rep_dem, president, day, close and precentage.
+The year in resulting dataset is from `r min(pull(pols_snp_unemploy_data, year))` to `r max(pull(pols_snp_unemploy_data, year))`.
+The key variables in the resulting dataset includes `year`, `month`, `gov_gop`, `sen_gop`, `rep_gop`, `gov_dem`, `sen_dem`, `rep_dem`, `president`, `close` and `precentage`.
 
 # Problem 3
 
@@ -113,7 +115,11 @@ The key variables in the resulting dataset includes year, month, gov_gop, sen_go
 names_data = read_csv(file = "./data/Popular_Baby_Names.csv",
                       col_types = "dcccdd") %>% 
   janitor::clean_names() %>% 
-  mutate(gender = str_to_lower(gender), ethnicity = str_to_lower(ethnicity), childs_first_name = str_to_lower(childs_first_name)) %>% 
+  mutate(gender = str_to_lower(gender), 
+         ethnicity = str_to_lower(ethnicity), 
+         childs_first_name = str_to_lower(childs_first_name),
+         ethnicity = recode(ethnicity, "asian and paci" = "asian and pacific islander", "black non hisp" = "black non hispanic", "white non hisp" = "white non hispanic")
+         ) %>% 
   distinct()
 ```
 
