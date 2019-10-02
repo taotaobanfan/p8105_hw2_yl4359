@@ -16,9 +16,9 @@ library(ggridges)
 
 ```{r}
 wheel_data = read_excel(
-  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", 
+  path = "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx", 
   sheet = "Mr. Trash Wheel",
-  range = "A2:N338"
+  range = "A2:N408"
   ) %>% 
   janitor::clean_names() %>% 
   drop_na("dumpster") %>% 
@@ -29,7 +29,7 @@ wheel_data = read_excel(
 
 ```{r}
 precipitation_2017_data = read_excel(
-  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  path = "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   sheet = "2017 Precipitation",
   skip = 1
   ) %>% 
@@ -38,7 +38,7 @@ precipitation_2017_data = read_excel(
   mutate(year = 2017)
 
 precipitation_2018_data = read_excel(
-  path = "./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx",
+  path = "./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
   sheet = "2018 Precipitation",
   skip = 1
   ) %>% 
